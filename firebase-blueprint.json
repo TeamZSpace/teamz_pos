@@ -6,6 +6,7 @@
       "type": "object",
       "properties": {
         "name": { "type": "string", "description": "Product name" },
+        "productCode": { "type": "string", "description": "Unique product code or SKU" },
         "categoryId": { "type": "string", "description": "Reference to Category" },
         "supplierId": { "type": "string", "description": "Reference to Supplier" },
         "landedCost": { "type": "number", "description": "Cost including shipping" },
@@ -116,6 +117,16 @@
         "address": { "type": "string" },
         "phone": { "type": "string" }
       }
+    },
+    "ProductMaster": {
+      "title": "Product Master",
+      "description": "Master list of product names and codes.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "productCode": { "type": "string" }
+      },
+      "required": ["name", "productCode"]
     }
   },
   "firestore": {
@@ -126,6 +137,7 @@
     "/suppliers": { "schema": "Supplier", "description": "Suppliers list" },
     "/categories": { "schema": "Category", "description": "Product categories" },
     "/expenses": { "schema": "Expense", "description": "Business expenses" },
-    "/settings": { "schema": "Settings", "description": "App settings" }
+    "/settings": { "schema": "Settings", "description": "App settings" },
+    "/productMaster": { "schema": "ProductMaster", "description": "Master product list" }
   }
 }

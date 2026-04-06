@@ -9,6 +9,7 @@ import { ConfirmModal } from './ConfirmModal';
 interface Product {
   id: string;
   name: string;
+  productCode?: string;
   categoryId: string;
   supplierId: string;
   landedCost: number;
@@ -17,6 +18,12 @@ interface Product {
   stock: number;
   expiryDate: string;
   purchaseDate: string;
+}
+
+interface ProductDefinition {
+  id: string;
+  name: string;
+  productCode: string;
 }
 
 interface Category {
@@ -34,6 +41,7 @@ export function Inventory() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [masterProducts, setMasterProducts] = useState<ProductDefinition[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +52,7 @@ export function Inventory() {
   });
   const [formData, setFormData] = useState({
     name: '',
+    productCode: '',
     categoryId: '',
     supplierId: '',
     landedCost: 0,
@@ -66,15 +75,32 @@ export function Inventory() {
       setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'suppliers'));
 
+    const unsubMaster = onSnapshot(collection(db, 'productMaster'), (snapshot) => {
+      setMasterProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProductDefinition)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'productMaster'));
+
     return () => {
       unsubProducts();
       unsubCategories();
       unsubSuppliers();
+      unsubMaster();
     };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation: Check for duplicate names
+    const isDuplicate = products.some(p => 
+      p.name.toLowerCase() === formData.name.toLowerCase() && 
+      (!editingProduct || p.id !== editingProduct.id)
+    );
+
+    if (isDuplicate) {
+      alert('A product with this name already exists. Please use a unique name.');
+      return;
+    }
+
     try {
       const margin = formData.sellingPrice - formData.landedCost;
       if (editingProduct) {
@@ -100,6 +126,7 @@ export function Inventory() {
     setEditingProduct(product);
     setFormData({
       name: product.name,
+      productCode: product.productCode || '',
       categoryId: product.categoryId,
       supplierId: product.supplierId,
       landedCost: product.landedCost,
@@ -116,6 +143,7 @@ export function Inventory() {
     setEditingProduct(null);
     setFormData({
       name: '',
+      productCode: '',
       categoryId: '',
       supplierId: '',
       landedCost: 0,
@@ -199,6 +227,7 @@ export function Inventory() {
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Product</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Code</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Category</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Supplier</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600 text-right">Landed Cost</th>
@@ -225,6 +254,7 @@ export function Inventory() {
               return (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4 font-medium text-slate-900">{product.name}</td>
+                  <td className="px-6 py-4 text-slate-500 font-mono text-xs">{product.productCode || '-'}</td>
                   <td className="px-6 py-4 text-slate-600 text-xs">{categoryDisplay}</td>
                   <td className="px-6 py-4 text-slate-600 text-xs">{supplier?.name || '-'}</td>
                   <td className="px-6 py-4 text-right text-slate-600">{formatMMK(product.landedCost)}</td>
@@ -305,8 +335,30 @@ export function Inventory() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
+                  <label className="text-sm font-semibold text-slate-700">Select from Product Master</label>
+                  <select 
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-indigo-50/50"
+                    onChange={(e) => {
+                      const master = masterProducts.find(m => m.id === e.target.value);
+                      if (master) {
+                        setFormData({ ...formData, name: master.name, productCode: master.productCode });
+                      }
+                    }}
+                    value=""
+                  >
+                    <option value="">-- Select to auto-fill --</option>
+                    {masterProducts.map(m => (
+                      <option key={m.id} value={m.id}>{m.name} ({m.productCode})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
                   <label className="text-sm font-semibold text-slate-700">Product Name</label>
                   <input required type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-slate-700">Product Code / SKU</label>
+                  <input type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" value={formData.productCode} onChange={(e) => setFormData({ ...formData, productCode: e.target.value })} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-slate-700">Category</label>

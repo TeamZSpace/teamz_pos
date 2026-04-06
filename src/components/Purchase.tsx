@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, onSnapshot, doc, updateDoc, getDoc, serverTimestamp, runTransaction, deleteDoc } from 'firebase/firestore';
-import { Plus, ShoppingCart, Calendar, Truck, DollarSign, Package, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, ShoppingCart, Calendar, Truck, DollarSign, Package, Edit2, Trash2, AlertTriangle, Search } from 'lucide-react';
 import { handleFirestoreError, OperationType, formatMMK } from '../lib/utils';
 import { format } from 'date-fns';
 import { ConfirmModal } from './ConfirmModal';
@@ -20,6 +20,7 @@ interface Purchase {
 interface Product {
   id: string;
   name: string;
+  productCode?: string;
   stock: number;
   landedCost: number;
   categoryId: string;
@@ -55,6 +56,7 @@ export function Purchase() {
     shipping: 0,
     date: format(new Date(), 'yyyy-MM-dd'),
   });
+  const [productSearch, setProductSearch] = useState('');
 
   useEffect(() => {
     const unsubPurchases = onSnapshot(collection(db, 'purchases'), (snapshot) => {
@@ -258,14 +260,29 @@ export function Purchase() {
                 <input required type="date" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Product</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700">Product</label>
+                  <div className="relative w-1/2">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Search..." 
+                      className="w-full pl-7 pr-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-amber-500 outline-none"
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
                 <select required className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" value={formData.productId} onChange={(e) => setFormData({ ...formData, productId: e.target.value })}>
                   <option value="">Select Product</option>
-                  {products.map(p => {
-                    const category = categories.find(c => c.id === p.categoryId);
-                    const catDisplay = category ? ` [${category.name}]` : '';
-                    return <option key={p.id} value={p.id}>{p.name}{catDisplay}</option>;
-                  })}
+                  {products
+                    .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.productCode && p.productCode.toLowerCase().includes(productSearch.toLowerCase())))
+                    .map(p => {
+                      const category = categories.find(c => c.id === p.categoryId);
+                      const catDisplay = category ? ` [${category.name}]` : '';
+                      const codeDisplay = p.productCode ? ` (${p.productCode})` : '';
+                      return <option key={p.id} value={p.id}>{p.name}{codeDisplay}{catDisplay}</option>;
+                    })}
                 </select>
               </div>
               <div className="space-y-1">

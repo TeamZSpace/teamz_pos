@@ -107,6 +107,7 @@ service cloud.firestore {
     function isValidProduct(data) {
       return hasRequiredFields(['name', 'landedCost', 'sellingPrice', 'stock']) &&
              isValidString('name', 1, 200) &&
+             isValidOptionalString('productCode', 50) &&
              isPositive('landedCost') &&
              isPositive('sellingPrice') &&
              data.stock is number;
@@ -199,6 +200,11 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    match /productMaster/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
   }
 }

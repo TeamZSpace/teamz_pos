@@ -24,6 +24,7 @@ interface Sale {
 interface Product {
   id: string;
   name: string;
+  productCode?: string;
   stock: number;
   sellingPrice: number;
   categoryId: string;
@@ -68,6 +69,7 @@ export function Sales() {
     codAmount: 0,
     items: [] as { productId: string; name: string; quantity: number; price: number }[],
   });
+  const [productSearch, setProductSearch] = useState('');
 
   const paymentMethods = ['Kpay', 'WavePay', 'AYAPay', 'uabpay', 'Bank', 'Cash'];
 
@@ -102,6 +104,10 @@ export function Sales() {
     
     const existingItem = formData.items.find(item => item.productId === productId);
     if (existingItem) {
+      if (existingItem.quantity >= product.stock) {
+        alert(`Only ${product.stock} units of "${product.name}" are available in stock.`);
+        return;
+      }
       setFormData({
         ...formData,
         items: formData.items.map(item => 
@@ -109,6 +115,10 @@ export function Sales() {
         )
       });
     } else {
+      if (product.stock <= 0) {
+        alert(`"${product.name}" is out of stock.`);
+        return;
+      }
       setFormData({
         ...formData,
         items: [...formData.items, { productId, name: product.name, quantity: 1, price: product.sellingPrice }]
@@ -483,26 +493,42 @@ export function Sales() {
                     Order Items
                   </h3>
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-600">Add Product</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-600">Add Product</label>
+                      <div className="relative w-1/2">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                        <input 
+                          type="text" 
+                          placeholder="Search..." 
+                          className="w-full pl-7 pr-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-rose-500 outline-none"
+                          value={productSearch}
+                          onChange={(e) => setProductSearch(e.target.value)}
+                        />
+                      </div>
+                    </div>
                     <select 
                       className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none"
                       onChange={(e) => {
                         if (e.target.value) {
                           handleAddItem(e.target.value);
                           e.target.value = '';
+                          setProductSearch('');
                         }
                       }}
                     >
                       <option value="">Select a product...</option>
-                      {products.filter(p => p.stock > 0).map(p => {
-                        const category = categories.find(c => c.id === p.categoryId);
-                        const catDisplay = category ? ` [${category.name}]` : '';
-                        return (
-                          <option key={p.id} value={p.id}>
-                            {p.name}{catDisplay} ({formatMMK(p.sellingPrice)} - {p.stock} in stock)
-                          </option>
-                        );
-                      })}
+                      {products
+                        .filter(p => p.stock > 0 && (p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.productCode && p.productCode.toLowerCase().includes(productSearch.toLowerCase()))))
+                        .map(p => {
+                          const category = categories.find(c => c.id === p.categoryId);
+                          const catDisplay = category ? ` [${category.name}]` : '';
+                          const codeDisplay = p.productCode ? ` (${p.productCode})` : '';
+                          return (
+                            <option key={p.id} value={p.id}>
+                              {p.name}{codeDisplay}{catDisplay} ({formatMMK(p.sellingPrice)} - {p.stock} in stock)
+                            </option>
+                          );
+                        })}
                     </select>
                   </div>
 

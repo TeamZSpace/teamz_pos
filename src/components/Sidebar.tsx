@@ -14,6 +14,7 @@ export function Sidebar({ activeMenu, setActiveMenu, isOpen, onClose }: SidebarP
   const menuItems: { name: MenuType; icon: React.ElementType; color: string }[] = [
     { name: 'Dashboard', icon: LayoutDashboard, color: 'text-indigo-600 bg-indigo-50' },
     { name: 'Inventory', icon: Package, color: 'text-emerald-600 bg-emerald-50' },
+    { name: 'ProductMaster', icon: Tags, color: 'text-rose-600 bg-rose-50' },
     { name: 'Purchase', icon: ShoppingCart, color: 'text-amber-600 bg-amber-50' },
     { name: 'Sales', icon: TrendingUp, color: 'text-rose-600 bg-rose-50' },
     { name: 'Expense', icon: Receipt, color: 'text-purple-600 bg-purple-50' },
