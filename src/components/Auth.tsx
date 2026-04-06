@@ -5,17 +5,34 @@ import { LogIn, LogOut, User } from 'lucide-react';
 
 export function Auth() {
   const [user, setUser] = React.useState(auth.currentUser);
+  const [error, setError] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     return auth.onAuthStateChanged((u) => setUser(u));
   }, []);
 
   const login = async () => {
+    setError(null);
+    setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      let message = 'Sign in failed. Please try again.';
+      if (error.code === 'auth/popup-blocked') {
+        message = 'The sign-in popup was blocked by your browser. Please allow popups for this site.';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        message = 'This domain is not authorized for sign-in. Please add the current domain to your Firebase Console (Authentication > Settings > Authorized domains).';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        message = 'Google sign-in is not enabled in your Firebase Console. Please enable it under Authentication > Sign-in method.';
+      } else if (error.message) {
+        message = error.message;
+      }
+      setError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -36,12 +53,26 @@ export function Auth() {
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">GlowProfit</h1>
           <p className="text-slate-500 mb-8 leading-relaxed">Supplement & Skin Care ERP. Manage your inventory, sales, and CRM in one place.</p>
+          
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl text-left">
+              <p className="font-bold mb-1">Sign-in Error:</p>
+              <p className="mb-2">{error}</p>
+              <p className="text-xs opacity-80">Tip: If you are using this app inside an iframe, try opening it in a new tab.</p>
+            </div>
+          )}
+
           <button
             onClick={login}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100"
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogIn className="w-5 h-5" />
-            Sign in with Google
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <LogIn className="w-5 h-5" />
+            )}
+            {isLoading ? 'Signing in...' : 'Sign in with Google'}
           </button>
         </div>
       </div>
