@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { Settings, Building2, Phone, MapPin, Save, Database, Download } from 'lucide-react';
+import { doc, onSnapshot, setDoc, collection, addDoc } from 'firebase/firestore';
+import { Settings, Building2, Phone, MapPin, Save, Database, Download, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/utils';
 
 interface CompanySettings {
@@ -17,6 +17,8 @@ export function Setting() {
     phone: '',
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedStatus, setSeedStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'company'), (snapshot) => {
@@ -51,8 +53,65 @@ export function Setting() {
     URL.revokeObjectURL(url);
   };
 
+  const handleSeedData = async () => {
+    if (!window.confirm('This will add sample categories, suppliers, and products to your database. Continue?')) return;
+    
+    setIsSeeding(true);
+    setSeedStatus('idle');
+    try {
+      // 1. Seed Categories
+      const catRef = collection(db, 'categories');
+      const cat1 = await addDoc(catRef, { name: 'Supplements' });
+      const cat2 = await addDoc(catRef, { name: 'Skin Care' });
+      const cat3 = await addDoc(catRef, { name: 'Vitamins' });
+
+      // 2. Seed Suppliers
+      const supRef = collection(db, 'suppliers');
+      const sup1 = await addDoc(supRef, { 
+        name: 'Glow Global Ltd', 
+        contactPerson: 'John Doe', 
+        phone: '09123456789', 
+        email: 'contact@glowglobal.com' 
+      });
+
+      // 3. Seed Products
+      const prodRef = collection(db, 'products');
+      await addDoc(prodRef, {
+        name: 'Vitamin C 1000mg',
+        categoryId: cat3.id,
+        supplierId: sup1.id,
+        landedCost: 15000,
+        sellingPrice: 25000,
+        margin: 10000,
+        stock: 50,
+        expiryDate: '2025-12-31',
+        purchaseDate: new Date().toISOString().split('T')[0]
+      });
+
+      await addDoc(prodRef, {
+        name: 'Hyaluronic Acid Serum',
+        categoryId: cat2.id,
+        supplierId: sup1.id,
+        landedCost: 12000,
+        sellingPrice: 22000,
+        margin: 10000,
+        stock: 30,
+        expiryDate: '2026-06-30',
+        purchaseDate: new Date().toISOString().split('T')[0]
+      });
+
+      setSeedStatus('success');
+      setTimeout(() => setSeedStatus('idle'), 3000);
+    } catch (err) {
+      console.error('Seeding failed:', err);
+      setSeedStatus('error');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-8 pb-12">
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           <Building2 className="w-6 h-6 text-slate-600" />
@@ -107,6 +166,33 @@ export function Setting() {
           >
             <Download className="w-5 h-5" />
             Download JSON
+          </button>
+        </div>
+
+        <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-indigo-900">Seed Sample Data</h3>
+            <p className="text-sm text-indigo-600">Populate your database with initial categories, suppliers, and products.</p>
+          </div>
+          <button
+            onClick={handleSeedData}
+            disabled={isSeeding}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all shadow-sm ${
+              seedStatus === 'success' 
+                ? 'bg-green-500 text-white' 
+                : seedStatus === 'error'
+                ? 'bg-red-500 text-white'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            } disabled:opacity-50`}
+          >
+            {isSeeding ? (
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            ) : seedStatus === 'success' ? (
+              <CheckCircle2 className="w-5 h-5" />
+            ) : (
+              <Database className="w-5 h-5" />
+            )}
+            {isSeeding ? 'Seeding...' : seedStatus === 'success' ? 'Success!' : seedStatus === 'error' ? 'Error' : 'Seed Data'}
           </button>
         </div>
       </div>
