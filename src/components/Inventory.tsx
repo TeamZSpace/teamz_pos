@@ -10,6 +10,10 @@ interface Product {
   id: string;
   name: string;
   productCode?: string;
+  brand?: string;
+  dosage?: string;
+  unitCount?: string;
+  dosageForm?: string;
   categoryId: string;
   supplierId: string;
   landedCost: number;
@@ -24,6 +28,11 @@ interface ProductDefinition {
   id: string;
   name: string;
   productCode: string;
+  brand?: string;
+  category?: string;
+  dosage?: string;
+  unitCount?: string;
+  dosageForm?: string;
 }
 
 interface Category {
@@ -53,6 +62,10 @@ export function Inventory() {
   const [formData, setFormData] = useState({
     name: '',
     productCode: '',
+    brand: '',
+    dosage: '',
+    unitCount: '',
+    dosageForm: '',
     categoryId: '',
     supplierId: '',
     landedCost: 0,
@@ -127,6 +140,10 @@ export function Inventory() {
     setFormData({
       name: product.name,
       productCode: product.productCode || '',
+      brand: product.brand || '',
+      dosage: product.dosage || '',
+      unitCount: product.unitCount || '',
+      dosageForm: product.dosageForm || '',
       categoryId: product.categoryId,
       supplierId: product.supplierId,
       landedCost: product.landedCost,
@@ -144,6 +161,10 @@ export function Inventory() {
     setFormData({
       name: '',
       productCode: '',
+      brand: '',
+      dosage: '',
+      unitCount: '',
+      dosageForm: '',
       categoryId: '',
       supplierId: '',
       landedCost: 0,
@@ -226,8 +247,9 @@ export function Inventory() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Product</th>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Code</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Product Code</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Brand</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Product Name</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Category</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Supplier</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600 text-right">Landed Cost</th>
@@ -253,8 +275,9 @@ export function Inventory() {
 
               return (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="px-6 py-4 font-medium text-slate-900">{product.name}</td>
                   <td className="px-6 py-4 text-slate-500 font-mono text-xs">{product.productCode || '-'}</td>
+                  <td className="px-6 py-4 font-medium text-slate-900">{product.brand || '-'}</td>
+                  <td className="px-6 py-4 font-medium text-slate-900">{product.name}</td>
                   <td className="px-6 py-4 text-slate-600 text-xs">{categoryDisplay}</td>
                   <td className="px-6 py-4 text-slate-600 text-xs">{supplier?.name || '-'}</td>
                   <td className="px-6 py-4 text-right text-slate-600">{formatMMK(product.landedCost)}</td>
@@ -341,7 +364,15 @@ export function Inventory() {
                     onChange={(e) => {
                       const master = masterProducts.find(m => m.id === e.target.value);
                       if (master) {
-                        setFormData({ ...formData, name: master.name, productCode: master.productCode });
+                        setFormData({ 
+                          ...formData, 
+                          name: master.name, 
+                          productCode: master.productCode,
+                          brand: master.brand || '',
+                          dosage: master.dosage || '',
+                          unitCount: master.unitCount || '',
+                          dosageForm: master.dosageForm || '',
+                        });
                       }
                     }}
                     value=""

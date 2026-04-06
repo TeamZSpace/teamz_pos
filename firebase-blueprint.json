@@ -7,6 +7,10 @@
       "properties": {
         "name": { "type": "string", "description": "Product name" },
         "productCode": { "type": "string", "description": "Unique product code or SKU" },
+        "brand": { "type": "string" },
+        "dosage": { "type": "string" },
+        "unitCount": { "type": "string" },
+        "dosageForm": { "type": "string" },
         "categoryId": { "type": "string", "description": "Reference to Category" },
         "supplierId": { "type": "string", "description": "Reference to Supplier" },
         "landedCost": { "type": "number", "description": "Cost including shipping" },
@@ -125,6 +129,11 @@
       "properties": {
         "name": { "type": "string" },
         "productCode": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string" },
+        "dosage": { "type": "string" },
+        "unitCount": { "type": "string" },
+        "dosageForm": { "type": "string" },
         "type": { "type": "string", "enum": ["Packing", "Travel"], "description": "Product type (Packing or Travel)" }
       },
       "required": ["name", "productCode", "type"]

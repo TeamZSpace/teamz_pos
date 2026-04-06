@@ -108,6 +108,10 @@ service cloud.firestore {
       return hasRequiredFields(['name', 'landedCost', 'sellingPrice', 'stock']) &&
              isValidString('name', 1, 200) &&
              isValidOptionalString('productCode', 50) &&
+             isValidOptionalString('brand', 100) &&
+             isValidOptionalString('dosage', 100) &&
+             isValidOptionalString('unitCount', 100) &&
+             isValidOptionalString('dosageForm', 100) &&
              isPositive('landedCost') &&
              isPositive('sellingPrice') &&
              data.stock is number;
@@ -149,6 +153,11 @@ service cloud.firestore {
       return hasRequiredFields(['name', 'productCode', 'type']) &&
              isValidString('name', 1, 200) &&
              isValidString('productCode', 1, 50) &&
+             isValidOptionalString('brand', 100) &&
+             isValidOptionalString('category', 100) &&
+             isValidOptionalString('dosage', 100) &&
+             isValidOptionalString('unitCount', 100) &&
+             isValidOptionalString('dosageForm', 100) &&
              data.type in ['Packing', 'Travel'];
     }
 

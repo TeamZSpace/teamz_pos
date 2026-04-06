@@ -25,6 +25,10 @@ interface Product {
   id: string;
   name: string;
   productCode?: string;
+  brand?: string;
+  dosage?: string;
+  unitCount?: string;
+  dosageForm?: string;
   stock: number;
   sellingPrice: number;
   categoryId: string;
@@ -144,6 +148,40 @@ export function Sales() {
     return `${prefix}${nextNum}`;
   };
 
+  const downloadOrderNote = (saleData: any) => {
+    const itemsText = saleData.items.map((item: any) => `- ${item.name} x ${item.quantity} (${formatMMK(item.price)})`).join('\n');
+    const note = `
+ORDER NOTE
+-----------
+Order Number: ${saleData.orderNumber}
+Date: ${saleData.date}
+Customer: ${saleData.customerName}
+Phone: ${formData.phone}
+Address: ${saleData.address}
+Payment: ${saleData.paymentMethod}
+Delivery Date: ${saleData.deliveryDate}
+
+ITEMS:
+${itemsText}
+
+Subtotal: ${formatMMK(saleData.subtotal)}
+COD/Shipping: ${formatMMK(saleData.codAmount)}
+TOTAL: ${formatMMK(saleData.totalAmount)}
+-----------
+Thank you for your order!
+    `.trim();
+
+    const blob = new Blob([note], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Order_${saleData.orderNumber}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.items.length === 0) return alert('Please add at least one item');
@@ -239,6 +277,20 @@ export function Sales() {
         } else {
           transaction.update(saleRef, saleData);
         }
+      });
+
+      // Download order note
+      downloadOrderNote({
+        orderNumber,
+        date: formData.date,
+        customerName: formData.orderName || formData.facebookName,
+        items: formData.items,
+        paymentMethod: formData.paymentMethod,
+        address: formData.address,
+        deliveryDate: formData.deliveryDate,
+        subtotal,
+        codAmount: formData.codAmount,
+        totalAmount
       });
 
       closeModal();
@@ -518,14 +570,19 @@ export function Sales() {
                     >
                       <option value="">Select a product...</option>
                       {products
-                        .filter(p => p.stock > 0 && (p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.productCode && p.productCode.toLowerCase().includes(productSearch.toLowerCase()))))
+                        .filter(p => p.stock > 0 && (
+                          p.name.toLowerCase().includes(productSearch.toLowerCase()) || 
+                          (p.productCode && p.productCode.toLowerCase().includes(productSearch.toLowerCase())) ||
+                          (p.brand && p.brand.toLowerCase().includes(productSearch.toLowerCase()))
+                        ))
                         .map(p => {
                           const category = categories.find(c => c.id === p.categoryId);
                           const catDisplay = category ? ` [${category.name}]` : '';
                           const codeDisplay = p.productCode ? ` (${p.productCode})` : '';
+                          const brandDisplay = p.brand ? ` - ${p.brand}` : '';
                           return (
                             <option key={p.id} value={p.id}>
-                              {p.name}{codeDisplay}{catDisplay} ({formatMMK(p.sellingPrice)} - {p.stock} in stock)
+                              {p.name}{brandDisplay}{codeDisplay}{catDisplay} ({formatMMK(p.sellingPrice)} - {p.stock} in stock)
                             </option>
                           );
                         })}

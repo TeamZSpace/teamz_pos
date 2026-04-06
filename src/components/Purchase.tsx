@@ -21,6 +21,10 @@ interface Product {
   id: string;
   name: string;
   productCode?: string;
+  brand?: string;
+  dosage?: string;
+  unitCount?: string;
+  dosageForm?: string;
   stock: number;
   landedCost: number;
   categoryId: string;
@@ -281,7 +285,11 @@ export function Purchase() {
                       const category = categories.find(c => c.id === p.categoryId);
                       const catDisplay = category ? ` [${category.name}]` : '';
                       const codeDisplay = p.productCode ? ` (${p.productCode})` : '';
-                      return <option key={p.id} value={p.id}>{p.name}{codeDisplay}{catDisplay}</option>;
+                      const brandDisplay = p.brand ? ` - ${p.brand}` : '';
+                      const dosageDisplay = p.dosage ? ` - ${p.dosage}` : '';
+                      const unitDisplay = p.unitCount ? ` - ${p.unitCount}` : '';
+                      const formDisplay = p.dosageForm ? ` - ${p.dosageForm}` : '';
+                      return <option key={p.id} value={p.id}>{p.name}{brandDisplay}{dosageDisplay}{unitDisplay}{formDisplay}{codeDisplay}{catDisplay}</option>;
                     })}
                 </select>
               </div>
